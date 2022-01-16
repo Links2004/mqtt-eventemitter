@@ -1,0 +1,29 @@
+{
+  "name": "mqtt-eventemitter",
+  "version": "1.0.0",
+  "description": "MQTT with eventemitter API and callback support",
+  "keywords": [
+    "mqtt",
+    "publish/subscribe",
+    "publish",
+    "subscribe",
+    "eventemitter"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Links2004/mqtt-eventemitter.git"
+  },
+  "main": "mqtt-ee.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Links2004",
+  "license": "LGPL-2.1-only",
+  "dependencies": {
+    "eventemitter2": "^6.4.5",
+    "mqtt": "^4.3.4"
+  },
+  "engines": {
+    "node": ">=10.0.0"
+  }
+}
