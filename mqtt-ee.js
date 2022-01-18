@@ -103,6 +103,30 @@ module.exports = async function (mqtt_url, mqtt_options) {
         mqtt_client.publish(convert_name(name), out, handle_error);
     }
 
+    function prepare_event(data) {
+        var event = [];
+        if (! Array.isArray(data)) {
+            data = [data];
+        }
+        for (var i in data) {
+            if (typeof data[i] === 'string') {
+                // handle callback topics
+                if (data[i].startsWith(prefix_callback_topic)) {
+                    const callback_topic = data[i].substring(prefix_callback_topic.length);
+                    event.push(function () {
+                        var args = [convert_name_rev(callback_topic)];
+                        args = args.concat(Array.prototype.slice.call(arguments));
+                        emit_event.apply(null, args);
+                    });
+                    continue;
+                }
+            }
+            // normal MQTT data
+            event.push(data[i]);
+        }
+        return event;
+    }
+
     const mqtt_client = mqtt.connect(mqtt_url, mqtt_options);
 
     mqtt_client.on('error', handle_error);
@@ -120,7 +144,7 @@ module.exports = async function (mqtt_url, mqtt_options) {
     mqtt_client.on('message', function (topic, message) {
         const event_name = convert_name_rev(topic);
         const s = event_name.split(eventRX.delimiter);
-        var data = mqtt_client.msg_json(message, true);
+        const data = mqtt_client.msg_json(message, true);
         // mqtt-eventemitter internal messages
         if (s[0] == prefix_intern) {
             switch (s[2]) {
@@ -128,7 +152,8 @@ module.exports = async function (mqtt_url, mqtt_options) {
                     const callback_id = s[3];
                     var cb = callback_db[callback_id];
                     if (cb) {
-                        cb.apply(null, data);
+                        var event = prepare_event(data);
+                        cb.apply(null, event);
                         delete callback_db[callback_id];
                     } else {
                         handle_error('get callback for unknown ID?', callback_id);
@@ -138,24 +163,7 @@ module.exports = async function (mqtt_url, mqtt_options) {
         } else {
             // other MQTT topics
             var event = [event_name];
-            if (! Array.isArray(data)) {
-                data = [data];
-            }
-            for (var i in data) {
-                if (typeof data[i] === 'string') {
-                    // handle callback topics
-                    if (data[i].startsWith(prefix_callback_topic)) {
-                        const callback_topic = data[i].substring(prefix_callback_topic.length);
-                        event.push(function () {
-                            const json = JSON.stringify(Array.prototype.slice.call(arguments));
-                            mqtt_client.publish(callback_topic, json, handle_error);
-                        });
-                        continue;
-                    }
-                }
-                // normal MQTT data
-                event.push(data[i]);
-            }
+            event = event.concat(prepare_event(data));
             eventRX.emit.apply(eventRX, event);
         }
     });
