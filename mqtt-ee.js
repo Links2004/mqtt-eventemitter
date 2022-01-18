@@ -75,20 +75,32 @@ module.exports = async function (mqtt_url, mqtt_options) {
         }
     }
 
-    function emit_event(name) {
+    function emit_event() {
         var args = Array.prototype.slice.call(arguments);
+        // remove name from array
+        var name = args.shift();
         for (var i in args) {
             // replace functions by callback reverence
             if (typeof args[i] === 'function') {
                 var callback = args[i];
-                const cbi = md5(name + '_' + i + '_' + rb(12).toString('base64'));
+                const cbi = md5(name + '_' + i + '_' + Math.random());
                 callback_db[cbi] = callback;
                 args[i] = `${prefix_callback_topic}${prefix_intern}/${clientId}/event_callback/${cbi}`;
             }
         }
-        // remove name from array
-        args.shift();
-        mqtt_client.publish(convert_name(name), JSON.stringify(args), handle_error);
+
+        var out;
+        // dont use a array for 1 arg emits
+        // this is to make it easy to use this lib with non mqtt-ee components
+        if(args.length == 1) {
+            out = args[0];
+            if(typeof out !== 'string') {
+                out = JSON.stringify(args[0]);
+            }
+        } else if(args.length >= 2) {
+            out = JSON.stringify(args)
+        }
+        mqtt_client.publish(convert_name(name), out, handle_error);
     }
 
     const mqtt_client = mqtt.connect(mqtt_url, mqtt_options);
@@ -108,7 +120,7 @@ module.exports = async function (mqtt_url, mqtt_options) {
     mqtt_client.on('message', function (topic, message) {
         const event_name = convert_name_rev(topic);
         const s = event_name.split(eventRX.delimiter);
-        const data = mqtt_client.msg_json(message, true);
+        var data = mqtt_client.msg_json(message, true);
         // mqtt-eventemitter internal messages
         if (s[0] == prefix_intern) {
             switch (s[2]) {
@@ -126,24 +138,23 @@ module.exports = async function (mqtt_url, mqtt_options) {
         } else {
             // other MQTT topics
             var event = [event_name];
-            if (Array.isArray(data)) {
-                for (var i in data) {
-                    if (typeof data[i] === 'string') {
-                        // handle callback topics
-                        if (data[i].startsWith(prefix_callback_topic)) {
-                            const callback_topic = data[i].substring(prefix_callback_topic.length);
-                            event.push(function () {
-                                const json = JSON.stringify(Array.prototype.slice.call(arguments));
-                                mqtt_client.publish(callback_topic, json, handle_error);
-                            });
-                            continue;
-                        }
+            if (! Array.isArray(data)) {
+                data = [data];
+            }
+            for (var i in data) {
+                if (typeof data[i] === 'string') {
+                    // handle callback topics
+                    if (data[i].startsWith(prefix_callback_topic)) {
+                        const callback_topic = data[i].substring(prefix_callback_topic.length);
+                        event.push(function () {
+                            const json = JSON.stringify(Array.prototype.slice.call(arguments));
+                            mqtt_client.publish(callback_topic, json, handle_error);
+                        });
+                        continue;
                     }
-                    // normal MQTT data
-                    event.push(data[i]);
                 }
-            } else {
-                event.push(data);
+                // normal MQTT data
+                event.push(data[i]);
             }
             eventRX.emit.apply(eventRX, event);
         }
