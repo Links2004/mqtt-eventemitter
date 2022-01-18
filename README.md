@@ -1,4 +1,6 @@
 # mqtt-eventemitter (mqtt-ee)
+[![npm version](https://badge.fury.io/js/mqtt-eventemitter.svg)](https://www.npmjs.com/package/mqtt-eventemitter)
+
 MQTT with EventEmitter API and callback support
 
 #### Goal ####
