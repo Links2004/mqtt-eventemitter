@@ -3,7 +3,6 @@
 const mqtt = require('mqtt');
 const EventEmitter2 = require('eventemitter2').EventEmitter2;
 const crypto = require('crypto');
-const rb = crypto.randomBytes;
 
 function md5(data) {
     return crypto.createHash('md5').update(data).digest("hex");
@@ -18,7 +17,7 @@ module.exports = async function (mqtt_url, mqtt_options) {
     }
 
     if (!mqtt_options.clientId) {
-        mqtt_options.clientId = 'mqtt_ee_' + rb(6).toString('base64');
+        mqtt_options.clientId = 'mqtt_ee_' + Math.random().toString(16).substr(2, 6)
     }
 
     const clientId = mqtt_options.clientId;
