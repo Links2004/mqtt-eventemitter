@@ -1,13 +1,14 @@
 {
   "name": "mqtt-eventemitter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MQTT with eventemitter API and callback support",
   "keywords": [
     "mqtt",
     "publish/subscribe",
     "publish",
     "subscribe",
-    "eventemitter"
+    "eventemitter",
+    "callback"
   ],
   "repository": {
     "type": "git",
