@@ -8,12 +8,28 @@ function md5(data) {
     return crypto.createHash('md5').update(data).digest("hex");
 }
 
-module.exports = async function (mqtt_url, mqtt_options) {
+module.exports = async function (mqtt_url, mqtt_options, ee_options) {
     const prefix_callback_topic = 'mqtt_ee_callback_topic_';
     const prefix_intern = 'mqtt_ee_intern';
 
     if (!mqtt_options) {
         mqtt_options = {};
+    }
+
+    if (!ee_options) {
+        ee_options = {};
+    }
+
+    if(!ee_options.delimiter) {
+        ee_options.delimiter =  '::';
+    }
+
+    if(!ee_options.maxListeners) {
+        ee_options.maxListeners = 1000;
+    }
+
+    if(!ee_options.mqtt_delimiter_replace) {
+        ee_options.mqtt_delimiter_replace =  ';';
     }
 
     if (!mqtt_options.clientId) {
@@ -26,15 +42,18 @@ module.exports = async function (mqtt_url, mqtt_options) {
 
     var eventRX = new EventEmitter2({
         wildcard: true,
-        delimiter: '::',
+        delimiter: ee_options.delimiter,
         newListener: true,
         removeListener: true,
-        maxListeners: 100,
+        maxListeners: ee_options.maxListeners,
         verboseMemoryLeak: true,
     });
 
     // convert from EventEmitter2 event name to MQTT topic
     function convert_name(name) {
+        if(ee_options.delimiter != '/') {
+            name = name.replaceAll('/', ee_options.mqtt_delimiter_replace);
+        }
         const s = name.split(eventRX.delimiter);
         var name_new_a = [];
         for (var i in s) {
@@ -57,6 +76,9 @@ module.exports = async function (mqtt_url, mqtt_options) {
                 continue;
             }
             name_new_a.push(s[i]);
+        }
+        if(ee_options.delimiter != '/') {
+            return name_new_a.join(eventRX.delimiter).replaceAll(ee_options.mqtt_delimiter_replace, '/');
         }
         return name_new_a.join(eventRX.delimiter);
     }
@@ -210,7 +232,7 @@ module.exports = async function (mqtt_url, mqtt_options) {
         ison: ison,
         hasListeners: ison,
         emitInterval: function emitInterval(event, ms, cb, nocheck) {
-            eventRX.on(event + '::get', function (ccb) {
+            eventRX.on(event + eventRX.delimiter + 'get', function (ccb) {
                 cb(event)
                     .then(function (data) {
                         if (typeof ccb === 'function') ccb(data);
