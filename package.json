@@ -1,6 +1,6 @@
 {
   "name": "mqtt-eventemitter",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MQTT with eventemitter API and callback support",
   "keywords": [
     "mqtt",
@@ -21,8 +21,8 @@
   "author": "Links2004",
   "license": "LGPL-2.1-only",
   "dependencies": {
-    "eventemitter2": "^6.4.5",
-    "mqtt": "^4.3.4"
+    "eventemitter2": "^6.4.6",
+    "mqtt": "^4.3.7"
   },
   "engines": {
     "node": ">=10.0.0"
