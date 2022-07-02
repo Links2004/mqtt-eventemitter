@@ -32,6 +32,10 @@ module.exports = async function (mqtt_url, mqtt_options, ee_options) {
         ee_options.mqtt_delimiter_replace =  ';';
     }
 
+    if(ee_options.qos == undefined) {
+        ee_options.qos =  1;
+    }
+
     if (!mqtt_options.clientId) {
         mqtt_options.clientId = 'mqtt_ee_' + Math.random().toString(16).substr(2, 6)
     }
@@ -122,7 +126,7 @@ module.exports = async function (mqtt_url, mqtt_options, ee_options) {
         } else if(args.length >= 2) {
             out = JSON.stringify(args)
         }
-        mqtt_client.publish(convert_name(name), out, handle_error);
+        mqtt_client.publish(convert_name(name), out, { qos: ee_options.qos }, handle_error);
     }
 
     function prepare_event(data) {
