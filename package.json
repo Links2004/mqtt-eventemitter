@@ -1,6 +1,6 @@
 {
   "name": "mqtt-eventemitter",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "MQTT with eventemitter API and callback support",
   "keywords": [
     "mqtt",

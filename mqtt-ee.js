@@ -164,7 +164,7 @@ module.exports = async function (mqtt_url, mqtt_options, ee_options) {
     });
 
     eventRX.on('newListener', function (name, cb) {
-        mqtt_client.subscribe(convert_name(name), handle_error);
+        mqtt_client.subscribe(convert_name(name), { qos: ee_options.qos }, handle_error);
     });
 
     mqtt_client.on('message', function (topic, message) {
@@ -195,7 +195,7 @@ module.exports = async function (mqtt_url, mqtt_options, ee_options) {
     });
 
     mqtt_client.on('connect', function() {
-        mqtt_client.subscribe(`${prefix_intern}/${clientId}/event_callback/+`, handle_error);
+        mqtt_client.subscribe(`${prefix_intern}/${clientId}/event_callback/+`, { qos: 2 }, handle_error);
     });
 
     // try to parse MQTT messages as JSON
