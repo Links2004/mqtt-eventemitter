@@ -258,6 +258,16 @@ module.exports = async function (mqtt_url, mqtt_options, ee_options) {
             run();
             return interval;
         },
+        resubscribe: function resubscribe() {
+            const events = eventRX.eventNames();
+            for (var i in events) {
+                const name = events[i];
+                mqtt_client.subscribe(convert_name(name), { qos: ee_options.qos }, handle_error);
+            }
+        },
+        eventNames: function() {
+            return eventRX.eventNames()
+        },
         mqtt: mqtt_client
     };
     return api;
