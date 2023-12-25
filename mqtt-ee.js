@@ -213,6 +213,14 @@ module.exports = async function (mqtt_url, mqtt_options, ee_options) {
         return msg;
     }
 
+    function eventNames() {
+        return eventRX.eventNames().filter(function (name) {
+            return name !== 'removeListener' &&
+            name !== 'newListener' &&
+            name !== 'error';
+        })
+    }
+
     var api = {
         emit: emit_event,
         on: function on(event, listener) {
@@ -259,15 +267,13 @@ module.exports = async function (mqtt_url, mqtt_options, ee_options) {
             return interval;
         },
         resubscribe: function resubscribe() {
-            const events = eventRX.eventNames();
+            const events = eventNames();
             for (var i in events) {
                 const name = events[i];
                 mqtt_client.subscribe(convert_name(name), { qos: ee_options.qos }, handle_error);
             }
         },
-        eventNames: function() {
-            return eventRX.eventNames()
-        },
+        eventNames: eventNames,
         mqtt: mqtt_client
     };
     return api;
